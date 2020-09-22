@@ -1,9 +1,10 @@
 exams2nops <- function(file, n = 1L, nsamp = NULL, dir = NULL, name = NULL,
   language = "en", title = "Exam", course = "",
-  institution = "R University", logo = "Rlogo.png", date = Sys.Date(), 
+  institution = "R University", logo = "Rlogo.png", date = Sys.Date(),
   replacement = FALSE, intro = NULL, blank = NULL, duplex = TRUE, pages = NULL,
   usepackage = NULL, header = NULL, encoding = "", startid = 1L, points = NULL,
-  showpoints = FALSE, samepage = FALSE, twocolumn = FALSE, reglength = 7L, seed = NULL, ...)
+  showpoints = FALSE, samepage = FALSE, twocolumn = FALSE, reglength = 7L, seed = NULL,
+  include_string_pages = TRUE, number_of_closed_questions = 0, ...)
 {
   ## handle matrix specification of file
   if(is.matrix(file)) {
@@ -52,8 +53,8 @@ exams2nops <- function(file, n = 1L, nsamp = NULL, dir = NULL, name = NULL,
     if(!is.null(lang$Header)) list(lang$Header)
   )
   lang <- lang[c(
-    "PersonalData", "FamilyName", "GivenName", "Signature", "RegistrationNumber", 
-    "Checked", "NoChanges", "DocumentType", "DocumentID", "Scrambling", 
+    "PersonalData", "FamilyName", "GivenName", "Signature", "RegistrationNumber",
+    "Checked", "NoChanges", "DocumentType", "DocumentID", "Scrambling",
     "Replacement", "MarkCarefully", "NotMarked", "Or",
     "MarkExampleA", "MarkExampleB", "MarkExampleC", "MarkExampleD", "MarkExampleE",
     "Warning", "Answers", "FillAnswers", "Point", "Points")]
@@ -64,7 +65,7 @@ exams2nops <- function(file, n = 1L, nsamp = NULL, dir = NULL, name = NULL,
   ## for all (unique) exercises in the exam
   ufile <- unique(as.vector(unlist(file)))
   x <- exams_metainfo(xexams(ufile, driver = list(sweave = list(quiet = TRUE, encoding = encoding),
-    read = NULL, transform = NULL, write = NULL), ...))[[1L]]    
+    read = NULL, transform = NULL, write = NULL), ...))[[1L]]
   names(x) <- ufile
   utype <- sapply(ufile, function(n) x[[n]]$type)
   wrong_type <- ufile[utype == "cloze"]
@@ -124,7 +125,16 @@ exams2nops <- function(file, n = 1L, nsamp = NULL, dir = NULL, name = NULL,
     replacement = replacement, intro = intro, blank = blank,
     duplex = duplex, pages = pages, file = template,
     nchoice = nchoice,
-    encoding = encoding, samepage = samepage, twocolumn = twocolumn, reglength = reglength)
+    encoding = encoding, samepage = samepage, twocolumn = twocolumn, reglength = reglength,
+    include_string_pages = include_string_pages)
+  if (number_of_closed_questions > 1) {
+    make_nops_template(number_of_closed_questions,
+    replacement = replacement, intro = intro, blank = blank,
+    duplex = duplex, pages = pages, file = template,
+    nchoice = nchoice,
+    encoding = encoding, samepage = samepage, twocolumn = twocolumn, reglength = reglength,
+    include_string_pages = include_string_pages)
+  }
 
   ## if points should be shown generate a custom transformer
   transform <- if(showpoints) {
@@ -144,7 +154,7 @@ exams2nops <- function(file, n = 1L, nsamp = NULL, dir = NULL, name = NULL,
   ## restore seed prior to calling exams2pdf()
   if(restore_seed) assign(".Random.seed", .rseed, envir = .GlobalEnv)
 
-  if(is.null(dir)) {  
+  if(is.null(dir)) {
     rval <- exams2pdf(file, n = n, nsamp = nsamp, name = name, template = template,
       header = header, transform = transform, encoding = encoding,
       points = points, seed = seed, ...)
@@ -158,13 +168,13 @@ exams2nops <- function(file, n = 1L, nsamp = NULL, dir = NULL, name = NULL,
     name <- paste(name, ".rds", sep = "")
     saveRDS(rval, file = file.path(dir, name))
   }
-  
+
   invisible(rval)
 }
 
 make_nops_template <- function(n, replacement = FALSE, intro = NULL, blank = NULL,
   duplex = TRUE, pages = NULL, file = NULL, nchoice = 5, encoding = "",
-  samepage = FALSE, twocolumn = FALSE, reglength = 7L)
+  samepage = FALSE, twocolumn = FALSE, reglength = 7L, include_string_pages)
 {
 
 page1 <- make_nops_page(n, nchoice = nchoice, reglength = reglength)
@@ -235,14 +245,14 @@ if(enc != "") sprintf('\\usepackage[%s]{inputenc}', enc) else NULL,
 
 \\setlength{\\parskip}{0.7ex plus0.1ex minus0.1ex}
 \\setlength{\\parindent}{0em}
-\\setlength{\\textheight}{29.6cm} 
-\\setlength{\\oddsidemargin}{-2.54cm} 
-\\setlength{\\evensidemargin}{-2.54cm} 
-\\setlength{\\topmargin}{-2.54cm} 
-\\setlength{\\headheight}{0cm} 
-\\setlength{\\headsep}{0cm} 
-\\setlength{\\footskip}{0cm} 
-\\setlength{\\unitlength}{1mm} 
+\\setlength{\\textheight}{29.6cm}
+\\setlength{\\oddsidemargin}{-2.54cm}
+\\setlength{\\evensidemargin}{-2.54cm}
+\\setlength{\\topmargin}{-2.54cm}
+\\setlength{\\headheight}{0cm}
+\\setlength{\\headsep}{0cm}
+\\setlength{\\footskip}{0cm}
+\\setlength{\\unitlength}{1mm}
 \\usepackage{chngpage}
 
 %% compatibility with pandoc
@@ -432,7 +442,7 @@ if(samepage) {
 
 \\makeatother
 
-\\begin{document} 
+\\begin{document}
 
 \\markboth{\\textsf{{\\mytitle}: {\\myID}}}{\\textsf{{\\mytitle}: {\\myID}}}
 \\pagestyle{myheadings}
@@ -442,22 +452,22 @@ empty,
 if(replacement) {
   c("\n\\newpage\n", page2, empty)
 },
-if(length(page3)) {
+if(length(page3) & include_string_pages) {
   c("\n\\newpage\n", page3, empty)
 },
 "
 
-\\setlength{\\textheight}{24cm} 
+\\setlength{\\textheight}{24cm}
 \\newpage
 
 \\setcounter{page}{1}
 
-\\setlength{\\oddsidemargin}{0cm} 
-\\setlength{\\evensidemargin}{0cm} 
-\\setlength{\\topmargin}{0cm} 
-\\setlength{\\headheight}{0cm} 
-\\setlength{\\headsep}{1cm} 
-\\setlength{\\footskip}{1cm} 
+\\setlength{\\oddsidemargin}{0cm}
+\\setlength{\\evensidemargin}{0cm}
+\\setlength{\\topmargin}{0cm}
+\\setlength{\\headheight}{0cm}
+\\setlength{\\headsep}{1cm}
+\\setlength{\\footskip}{1cm}
 
 \\newpage
 ",
@@ -496,7 +506,7 @@ if(reglength > 10L) warning(sprintf("'reglength = %s' too large, using 10 instea
 addreg <- pmin(3L, pmax(0L, reglength - 7L))
 
 mytype <- if(addreg < 1L) {
-  ## the number of questions rounded up in steps of 5 
+  ## the number of questions rounded up in steps of 5
   ## (needed for uibk scanning services)
   formatC(5 * ((n - 1) %/% 5 + 1), width = 3, flag = "0")
 } else {
@@ -516,7 +526,7 @@ abcde <- function(i, above = FALSE, nchoice = 5) {
   nchoice <- max(nchoice)
   if(nchoice == 5) {
     sprintf(paste("\\put(%i,%i){\\makebox(0,0)[b]{\\textsf{", letters[1:5],"}}}", sep = "", collapse = "\n"),
-      ix + 1 * 8, iy, ix + 2 * 8, iy, ix + 3 * 8, iy, ix + 4 * 8, iy, ix + 5 * 8, iy)  
+      ix + 1 * 8, iy, ix + 2 * 8, iy, ix + 3 * 8, iy, ix + 4 * 8, iy, ix + 5 * 8, iy)
   } else if(nchoice == 4) {
     sprintf(paste("\\put(%i,%i){\\makebox(0,0)[b]{\\textsf{", letters[1:4],"}}}", sep = "", collapse = "\n"),
       ix + 1 * 8, iy, ix + 2 * 8, iy, ix + 3 * 8, iy, ix + 4 * 8, iy)
@@ -538,7 +548,7 @@ qbox <- function(i, nchoice = 5) {
   iy <- (i - 1) %% 15 + 1
   ix <- 19 + 64 * ix - as.numeric(ix >= 2) * 4
   iy <- 129 - 7 * iy - 3 * ((iy - 1) %/% 5)
-  
+
   if(nchoice > 0) {
     sprintf("\\put(%i,%i){\\makebox(0,0){\\textsf{%i}}}\n\\multiput(%i,%i)(8,0){%i}{\\framebox(4,4){}}",
       ix + 2, iy + 6, i, ix + 6, iy + 4, nchoice)
@@ -549,50 +559,50 @@ qbox <- function(i, nchoice = 5) {
 
 c("
 \\thispagestyle{empty}
-\\begin{picture}(210,290) 
-\\thicklines 
+\\begin{picture}(210,290)
+\\thicklines
 
 % position marks for scanning
-\\put(17.5,13){\\line(1,0){5}} \\put(20,10.5){\\line(0,1){5}} 
-\\put(187.5,13){\\line(1,0){5}} \\put(190,10.5){\\line(0,1){5}} 
-\\put(157.5,270){\\line(1,0){5}} \\put(160,267.5){\\line(0,1){5}} 
-\\put(27.5,270){\\line(1,0){5}} \\put(30,267.5){\\line(0,1){5}} 
+\\put(17.5,13){\\line(1,0){5}} \\put(20,10.5){\\line(0,1){5}}
+\\put(187.5,13){\\line(1,0){5}} \\put(190,10.5){\\line(0,1){5}}
+\\put(157.5,270){\\line(1,0){5}} \\put(160,267.5){\\line(0,1){5}}
+\\put(27.5,270){\\line(1,0){5}} \\put(30,267.5){\\line(0,1){5}}
 
 % personal data box
-\\put(\\namecenter,244){\\makebox(0,0){\\textsf{\\myPersonalData}}} 
-\\put(20,198){\\framebox(\\namewidth,43){}} \\thinlines 
-\\multiput(20,217)(0,12){2}{\\line(1,0){\\nameline}} \\thicklines 
-\\put(21,236){\\makebox(0,5)[l]{\\textsf{\\myFamilyName:}}} 
-\\put(21,224){\\makebox(0,5)[l]{\\textsf{\\myGivenName:}}} 
-\\put(21,212){\\makebox(0,5)[l]{\\textsf{\\mySignature:}}} 
-\\put(\\namechecked,200){\\makebox(0,0)[rb]{\\scriptsize{\\textsf{\\myChecked}}}} 
+\\put(\\namecenter,244){\\makebox(0,0){\\textsf{\\myPersonalData}}}
+\\put(20,198){\\framebox(\\namewidth,43){}} \\thinlines
+\\multiput(20,217)(0,12){2}{\\line(1,0){\\nameline}} \\thicklines
+\\put(21,236){\\makebox(0,5)[l]{\\textsf{\\myFamilyName:}}}
+\\put(21,224){\\makebox(0,5)[l]{\\textsf{\\myGivenName:}}}
+\\put(21,212){\\makebox(0,5)[l]{\\textsf{\\mySignature:}}}
+\\put(\\namechecked,200){\\makebox(0,0)[rb]{\\scriptsize{\\textsf{\\myChecked}}}}
 
 % registration number box
-\\put(\\regcenter,244){\\makebox(0,0){\\textsf{\\myRegistrationNumber}}} 
-\\put(\\regleft,233){\\framebox(\\regwidth,8){}} \\thinlines 
-\\multiput(\\regleftt,233)(8,0){\\regnumt}{\\line(0,1){1.5}} \\thicklines 
-\\multiput(\\regleftb,163)(8,0){\\regnum}{\\begin{picture}(0,0) 
+\\put(\\regcenter,244){\\makebox(0,0){\\textsf{\\myRegistrationNumber}}}
+\\put(\\regleft,233){\\framebox(\\regwidth,8){}} \\thinlines
+\\multiput(\\regleftt,233)(8,0){\\regnumt}{\\line(0,1){1.5}} \\thicklines
+\\multiput(\\regleftb,163)(8,0){\\regnum}{\\begin{picture}(0,0)
 \\multiput(0,0)(0,7){10}{\\framebox(4,4){}}\\end{picture}}",
 if(replacement) "\\setcounter{nr3}{0}" else "\\newcounter{nr3}",
 "
-\\multiput(\\regleftn,228)(0,-7){10}{\\begin{picture}(0,0) 
+\\multiput(\\regleftn,228)(0,-7){10}{\\begin{picture}(0,0)
 \\multiput(0,0)(\\regwidthn,0){2}{\\makebox(0,0){\\textsf{\\arabic{nr3}}}}
-\\end{picture} \\stepcounter{nr3}} 
+\\end{picture} \\stepcounter{nr3}}
 % general instructions and logo
 \\IfFileExists{\\mylogo}{\\put(175,251){\\includegraphics[height=2.51cm,keepaspectratio]{\\mylogo}}}{}
 \\put(40,270){\\makebox(0,0)[bl]{\\textsf{\\textbf{\\LARGE{\\myinstitution}}}}}
-\\put(20,147){\\parbox{170mm}{\\textsf{\\myWarning}}} 
+\\put(20,147){\\parbox{170mm}{\\textsf{\\myWarning}}}
 
 % mark examples
 \\put(20,158){\\makebox(0,0)[l]{\\textsf{\\myMarkCarefully:}}}
 \\put(\\myMarkExampleB,158){\\makebox(0,0)[l]{\\textsf{\\myNotMarked:}}}
 \\put(\\myMarkExampleD,158){\\makebox(0,0)[l]{\\textsf{\\myOr}}}
-\\put(\\myMarkExampleA,157){\\framebox(4,4){}} 
-\\put(\\myMarkExampleA,157){\\line(1,1){4}} \\put(\\myMarkExampleA,161){\\line(1,-1){4}} 
-\\put(\\myMarkExampleA.2,157){\\line(1,1){3.8}} \\put(\\myMarkExampleA.2,161){\\line(1,-1){3.8}} 
-\\put(\\myMarkExampleA,157.2){\\line(1,1){3.8}} \\put(\\myMarkExampleA,160.8){\\line(1,-1){3.8}} 
-\\put(\\myMarkExampleC,157){\\framebox(4,4){}} 
-\\put(\\myMarkExampleE,158){\\colorbox{black}{\\framebox(2,2){}}} 
+\\put(\\myMarkExampleA,157){\\framebox(4,4){}}
+\\put(\\myMarkExampleA,157){\\line(1,1){4}} \\put(\\myMarkExampleA,161){\\line(1,-1){4}}
+\\put(\\myMarkExampleA.2,157){\\line(1,1){3.8}} \\put(\\myMarkExampleA.2,161){\\line(1,-1){3.8}}
+\\put(\\myMarkExampleA,157.2){\\line(1,1){3.8}} \\put(\\myMarkExampleA,160.8){\\line(1,-1){3.8}}
+\\put(\\myMarkExampleC,157){\\framebox(4,4){}}
+\\put(\\myMarkExampleE,158){\\colorbox{black}{\\framebox(2,2){}}}
 
 
 % title and date
@@ -633,15 +643,15 @@ if(n > 30) {
 sapply(1:n, function(i) qbox(i, nchoice = nchoice[i])),
 "
 % block with id, scrambling, type, replacement box
-\\linethickness{0.5mm} \\put(20,164){\\framebox(\\namewidth,28){}} \\thicklines  
-\\put(32,177){\\makebox(0,0)[t]{\\textsf{\\myDocumentType}}} 
-\\put(25,166){\\framebox(14,7){}} 
+\\linethickness{0.5mm} \\put(20,164){\\framebox(\\namewidth,28){}} \\thicklines
+\\put(32,177){\\makebox(0,0)[t]{\\textsf{\\myDocumentType}}}
+\\put(25,166){\\framebox(14,7){}}
 \\put(67,177){\\makebox(0,0)[t]{\\textsf{\\myDocumentID \\mycourse}}}
 \\put(46,166){\\framebox(42,7){}} \\put(25,183.5){\\parbox{70mm}{%
 \\textsf{\\myNoChanges}}}
 \\ifregseven
-\\thinlines \\put(113,180){\\line(0,1){1.5}} \\thicklines 
-\\put(113,191){\\makebox(0,0)[t]{\\textsf{\\textbf{\\myScrambling}}}} 
+\\thinlines \\put(113,180){\\line(0,1){1.5}} \\thicklines
+\\put(113,191){\\makebox(0,0)[t]{\\textsf{\\textbf{\\myScrambling}}}}
 \\put(106,180){\\framebox(14,7){}}
 % scrambling is currently always zero
 \\put(109.5,183.5){\\makebox(0,0){\\Large{\\fontencoding{T1}\\fontfamily{phv}\\selectfont 0}}}
@@ -658,9 +668,9 @@ if(replacement & addreg == 0L) {
 \\put(114,172){\\makebox(0,0)[r]{\\textsf{\\myReplacement:}}}
 
 % cross in replacement box
-\\put(116,170){\\line(1,1){4}} \\put(116.1,174.15){\\line(1,-1){4}} 
-\\put(116.2,169.9){\\line(1,1){3.8}} \\put(116.2,174){\\line(1,-1){3.8}} 
-\\put(116,170.2){\\line(1,1){3.8}} \\put(116,173.8){\\line(1,-1){3.8}} 
+\\put(116,170){\\line(1,1){4}} \\put(116.1,174.15){\\line(1,-1){4}}
+\\put(116.2,169.9){\\line(1,1){3.8}} \\put(116.2,174){\\line(1,-1){3.8}}
+\\put(116,170.2){\\line(1,1){3.8}} \\put(116,173.8){\\line(1,-1){3.8}}
 "
 },
 
@@ -677,14 +687,14 @@ nchoice <- rep(nchoice, length.out = n)
 
 c("
 \\thispagestyle{empty}
-\\begin{picture}(210,290) 
-\\thicklines 
+\\begin{picture}(210,290)
+\\thicklines
 
 % position marks for scanning
-\\put(17.5,13){\\line(1,0){5}} \\put(20,10.5){\\line(0,1){5}} 
-\\put(187.5,13){\\line(1,0){5}} \\put(190,10.5){\\line(0,1){5}} 
-\\put(157.5,270){\\line(1,0){5}} \\put(160,267.5){\\line(0,1){5}} 
-\\put(27.5,270){\\line(1,0){5}} \\put(30,267.5){\\line(0,1){5}} 
+\\put(17.5,13){\\line(1,0){5}} \\put(20,10.5){\\line(0,1){5}}
+\\put(187.5,13){\\line(1,0){5}} \\put(190,10.5){\\line(0,1){5}}
+\\put(157.5,270){\\line(1,0){5}} \\put(160,267.5){\\line(0,1){5}}
+\\put(27.5,270){\\line(1,0){5}} \\put(30,267.5){\\line(0,1){5}}
 
 % general instructions and logo
 \\IfFileExists{\\mylogo}{\\put(175,251){\\includegraphics[height=2.51cm,keepaspectratio]{\\mylogo}}}{}
@@ -693,19 +703,19 @@ c("
 
 switch(n,
 "1" = sprintf("
-\\put(23,204){\\makebox(0,0)[t]{\\textsf{%s}}} 
+\\put(23,204){\\makebox(0,0)[t]{\\textsf{%s}}}
 \\put(20, 22){\\framebox(170,183){}}", labels[1L]),
 "2" = sprintf("
-\\put(23,204){\\makebox(0,0)[t]{\\textsf{%s}}} 
+\\put(23,204){\\makebox(0,0)[t]{\\textsf{%s}}}
 \\put(20,116){\\framebox(170,89){}}
-\\put(23,110){\\makebox(0,0)[t]{\\textsf{%s}}} 
+\\put(23,110){\\makebox(0,0)[t]{\\textsf{%s}}}
 \\put(20, 22){\\framebox(170,89){}}", labels[1L], labels[2L]),
 "3" = sprintf("
-\\put(23,204){\\makebox(0,0)[t]{\\textsf{%s}}} 
+\\put(23,204){\\makebox(0,0)[t]{\\textsf{%s}}}
 \\put(20,148){\\framebox(170,57){}}
-\\put(23,141){\\makebox(0,0)[t]{\\textsf{%s}}} 
+\\put(23,141){\\makebox(0,0)[t]{\\textsf{%s}}}
 \\put(20, 85){\\framebox(170,57){}}
-\\put(23, 78){\\makebox(0,0)[t]{\\textsf{%s}}} 
+\\put(23, 78){\\makebox(0,0)[t]{\\textsf{%s}}}
 \\put(20, 22){\\framebox(170,57){}}", labels[1L], labels[2L], labels[3L])
 ),
 
@@ -728,20 +738,20 @@ if(n > 2L) { c(
 sprintf("\\put(106,223){\\makebox(0,0){\\textsf{%s}}}", labels[3L]),
 sprintf("\\multiput(110,221)(8,0){%s}{\\framebox(4,4){}}", nchoice[3L])
 )} else NULL,
- 
+
 "
 % block with id, scrambling, type
-\\linethickness{0.5mm} \\put(20,217){\\framebox(140,28){}} \\thicklines  
-\\put(32,230){\\makebox(0,0)[t]{\\textsf{\\myDocumentType}}} 
-\\put(25,219){\\framebox(14,7){}} 
-\\put(67,230){\\makebox(0,0)[t]{\\textsf{\\myDocumentID}}} 
+\\linethickness{0.5mm} \\put(20,217){\\framebox(140,28){}} \\thicklines
+\\put(32,230){\\makebox(0,0)[t]{\\textsf{\\myDocumentType}}}
+\\put(25,219){\\framebox(14,7){}}
+\\put(67,230){\\makebox(0,0)[t]{\\textsf{\\myDocumentID}}}
 \\put(46,219){\\framebox(42,7){}}
 \\put(25,236.5){\\parbox{70mm}{%
 \\textsf{\\myNoChanges}}}
 \\put(32,222.5){\\makebox(0,0){\\Large{\\textsf{999}}}}
 \\put(67,222.5){\\makebox(0,0){\\Large{\\textsf{\\myID}}}}
 
-\\end{picture} 
+\\end{picture}
 ")
 }
 
@@ -751,7 +761,7 @@ nops_language <- function(file, converter = c("none", "tth", "pandoc"))
   if(!file.exists(file)) file <- system.file(file.path("nops", paste0(file, ".dcf")), package = "exams")
   if(file == "") file <- system.file(file.path("nops", "en.dcf"), package = "exams")
   lang <- drop(read.dcf(file))
-  
+
   ## handle Babel/Header separately
   if("Babel" %in% names(lang)) {
     babel <- as.vector(lang["Babel"])
@@ -765,17 +775,17 @@ nops_language <- function(file, converter = c("none", "tth", "pandoc"))
   } else {
     header <- NULL
   }
-  
+
   ## necessary fields for a correct lanuage specification
-  langfields <- c("PersonalData", "Name", "FamilyName", "GivenName", "Signature", "RegistrationNumber", 
-    "Checked", "NoChanges", "DocumentType", "DocumentID", "Scrambling", 
+  langfields <- c("PersonalData", "Name", "FamilyName", "GivenName", "Signature", "RegistrationNumber",
+    "Checked", "NoChanges", "DocumentType", "DocumentID", "Scrambling",
     "Replacement", "MarkCarefully", "NotMarked", "Or",
     "MarkExampleA", "MarkExampleB", "MarkExampleC", "MarkExampleD", "MarkExampleE",
     "Warning", "Answers", "FillAnswers", "Point", "Points",
     "ExamResults", "Evaluation", "Mark", "Question", "GivenAnswer", "CorrectAnswer",
     "ExamSheet")
   if(!all(langfields %in% names(lang))) stop("invalid language specification")
-  
+
   ## convert to desired output markup
   converter <- match.arg(tolower(converter), c("none", "tth", "pandoc"))
   if(converter == "tth") {
@@ -791,7 +801,7 @@ nops_language <- function(file, converter = c("none", "tth", "pandoc"))
     }
     lang <- structure(sapply(lang, mypandoc), .Names = names(lang))
   }
-  
+
   ## convert to list and return
   lang <- as.list(lang)
   if(!is.null(babel)) lang$Babel <- babel
