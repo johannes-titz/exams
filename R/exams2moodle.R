@@ -2,7 +2,7 @@
 ## http://docs.moodle.org/en/Moodle_XML_format
 exams2moodle <- function(file, n = 1L, nsamp = NULL, dir = ".",
   name = NULL, quiet = TRUE, edir = NULL, tdir = NULL, sdir = NULL, verbose = FALSE,
-  resolution = 100, width = 4, height = 4, svg = FALSE, encoding = "", 
+  resolution = 100, width = 4, height = 4, svg = FALSE, encoding = "",
   iname = TRUE, stitle = NULL, testid = FALSE, zip = FALSE,
   num = NULL, mchoice = NULL, schoice = mchoice, string = NULL, cloze = NULL,
   points = NULL, rule = NULL, pluginfile = TRUE,
@@ -481,7 +481,7 @@ make_question_moodle23 <- function(name = NULL, solution = TRUE, shuffle = FALSE
               '}', sep = ''))
           }
         }
-        if(x$metainfo$clozetype[i] == "string") {
+        if(x$metainfo$clozetype[i] == "string" || x$metainfo$clozetype[i] == "essay") {
           for(j in 1:k) {
             tmp <- c(tmp, paste(ql[j], ' {', points[i], ':SHORTANSWER:%100%', solution[[i]][j],
               if(!usecase) paste('~%100%', tolower(solution[[i]][j]), sep = '') else NULL,

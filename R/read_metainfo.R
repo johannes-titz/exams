@@ -48,7 +48,7 @@ extract_command <- function(x, command, type = c("character", "logical", "numeri
     warning("command", sQuote(command), "occurs more than once, last instance used")
     rval <- tail(rval, 1L)
   }
-  
+
   if(markup == "latex") {
     ## strip off everything in brackets
     ## omit everything before \command{
@@ -80,16 +80,16 @@ extract_extra <- function(x, markup = c("latex", "markdown"))
 
   ## search for extra commands
   comm0 <- if(markup == "latex") "\\exextra[" else "exextra["
-  comm <- x[grep(comm0, x, fixed = TRUE)]  
+  comm <- x[grep(comm0, x, fixed = TRUE)]
   if(length(comm) < 1L) return(list())
-  
+
   ## extract command and type
   comm <- sapply(strsplit(comm, comm0, fixed = TRUE), "[", 2L)
   comm <- sapply(strsplit(comm, "]", fixed = TRUE), "[", 1L)
   nam <- strsplit(comm, ",", fixed = TRUE)
   typ <- sapply(nam, function(z) if(length(z) > 1L) z[2L] else "character")
   nam <- sapply(nam, "[", 1L)
-  
+
   ## call extract_command
   rval <- lapply(seq_along(comm), function(i) extract_command(x,
     command = paste0("exextra[", comm[i], "]"), type = typ[i], markup = markup))
@@ -108,7 +108,7 @@ extract_items <- function(x, markup = c("latex", "markdown"))
     x <- gsub("^\\* ", "\\\\item ", x)
     x <- gsub("^- ", "\\\\item ", x)
   }
-    
+
   ## make sure we get items on multiple lines right
   x <- paste(x, collapse = " ")
   x <- gsub("^ *\\\\item *", "", x)
@@ -132,7 +132,7 @@ read_metainfo <- function(file, markup = NULL)
 
   ## Description ###################################
   extype <- match.arg(extract_command(x, "extype", markup = markup), ## exercise type: schoice, mchoice, num, string, or cloze
-    c("schoice", "mchoice", "num", "string", "cloze"))  
+    c("schoice", "mchoice", "num", "string", "cloze", "essay"))
   exname <- extract_command(x, "exname", markup = markup)            ## short name/description, only to be used for printing within R
   extitle <- extract_command(x, "extitle", markup = markup)          ## pretty longer title
   exsection <- extract_command(x, "exsection", markup = markup)      ## sections for groups of exercises, use slashes for subsections (like URL)
@@ -174,6 +174,7 @@ read_metainfo <- function(file, markup = NULL)
     "mchoice" = string2mchoice(exsolution),
     "num" = as.numeric(exsolution),
     "string" = exsolution,
+    "essay" = exsolution,
     "cloze" = {
       if(is.null(exclozetype)) {
         warning("no exclozetype specified, taken to be string")
@@ -183,12 +184,13 @@ read_metainfo <- function(file, markup = NULL)
         warning("length of exclozetype does not match length of \\exsolution{}")
       exclozetype <- rep(exclozetype, length.out = slength)
       exsolution <- as.list(exsolution)
-      for(i in 1L:slength) exsolution[[i]] <- switch(match.arg(exclozetype[i], c("schoice", "mchoice", "num", "string", "verbatim")),
+      for(i in 1L:slength) exsolution[[i]] <- switch(match.arg(exclozetype[i], c("schoice", "mchoice", "num", "string", "verbatim", "essay")),
         "schoice" = string2mchoice(exsolution[[i]], single = TRUE),
         "mchoice" = string2mchoice(exsolution[[i]]),
         "num" = as.numeric(exsolution[[i]]),
         "string" = exsolution[[i]],
-        "verbatim" = exsolution[[i]])
+        "verbatim" = exsolution[[i]],
+        "essay" = exsolution[[i]])
       exsolution
     })
   slength <- length(exsolution)
@@ -212,6 +214,7 @@ read_metainfo <- function(file, markup = NULL)
       }
     },
     "string" = paste(exname, ": ", paste(exsolution, collapse = "\n"), sep = ""),
+	  "essay" = paste(exname, ": ", paste(exsolution, collapse = "\n"), sep = ""),
     "cloze" = paste(exname, ": ", paste(sapply(exsolution, paste, collapse = ", "), collapse = " | "), sep = "")
   )
 
@@ -221,20 +224,21 @@ read_metainfo <- function(file, markup = NULL)
   }
 
   ## possible char setting options
-  if(!is.null(exmaxchars)) {
-    exmaxchars <- rep(exmaxchars, length.out = slength)
-    exmaxchars <- lapply(exmaxchars, function(x) {
-      x <- gsub("\\s", ",", x)
-      x <- strsplit(x, ",")[[1]]
-      x <- x[x != ""]
-      if(any(x == "NA"))
-        x[x == "NA"] <- NA
-      mode(x) <- "integer"
-      x
-    })
-    if(slength < 2)
-      exmaxchars <- exmaxchars[[1]]
-  }
+  # if(!is.null(exmaxchars)) {
+  #   print(exmaxchars)
+  #   exmaxchars <- rep(exmaxchars, length.out = slength)
+  #   exmaxchars <- lapply(exmaxchars, function(x) {
+  #     x <- gsub("\\s", ",", x)
+  #     x <- strsplit(x, ",")[[1]]
+  #     x <- x[x != ""]
+  #     if(any(x == "NA"))
+  #       x[x == "NA"] <- NA
+  #     mode(x) <- "integer"
+  #     x
+  #   })
+  #   if(slength < 2)
+  #     exmaxchars <- exmaxchars[[1]]
+  # }
 
   ## return everything (backward compatible with earlier versions)
   rval <- list(

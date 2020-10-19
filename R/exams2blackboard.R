@@ -550,7 +550,7 @@ make_itembody_blackboard <- function(rtiming = FALSE, shuffle = FALSE, rshuffle 
           '</response_lid>'
         )
       }
-      if(type[i] == "string" || type[i] == "num") {
+      if(type[i] == "string" || type[i] == "essay" || type[i] == "num") {
         for(j in seq_along(solution[[i]])) {
           soltext <- if(type[i] == "num") {
              if(!is.null(digits)) format(round(solution[[i]][j], digits), nsmall = digits) else solution[[i]][j]
@@ -565,7 +565,7 @@ make_itembody_blackboard <- function(rtiming = FALSE, shuffle = FALSE, rshuffle 
                 } else NULL, questionlist[[i]][j]), ']]></mat_formattedtext></mat_extension>', sep = ""),
                 '</material>')
             } else NULL,
-            paste(if(type[i] == "string") '<response_str ident="' else '<response_num ident="',
+            paste(if(type[i] == "string" || type[i] == "essay") '<response_str ident="' else '<response_num ident="',
                ids[[i]]$response, '" rcardinality="Single">', sep = ''),
             paste('<render_fib',
               if(!is.na(maxchars[[i]][1])) {
@@ -578,7 +578,7 @@ make_itembody_blackboard <- function(rtiming = FALSE, shuffle = FALSE, rshuffle 
                 paste(' columns="', maxchars[[i]][3], '"', sep = '')
               } else NULL, '>', sep = ''),
               '</render_fib>',
-            if(type[i] == "string") '</response_str>' else '</response_num>')
+            if(type[i] == "string" || type[i] == "essay") '</response_str>' else '</response_num>')
         }
       }
       if(!qti12)
@@ -634,9 +634,9 @@ make_itembody_blackboard <- function(rtiming = FALSE, shuffle = FALSE, rshuffle 
           }
         }
       }
-      if(type[i] == "string" || type[i] == "num") {
+      if(type[i] == "string" || type[i] == "num" || type[i] == "essay") {
         for(j in seq_along(solution[[i]])) {
-          if(type[i] == "string") {
+          if(type[i] == "string" || type[i] == "essay") {
             soltext <- if(!is.character(solution[[i]][j])) {
               format(round(solution[[i]][j], digits), nsmall = digits)
             } else solution[[i]][j]
@@ -690,7 +690,7 @@ make_itembody_blackboard <- function(rtiming = FALSE, shuffle = FALSE, rshuffle 
       if(length(correct_answers)) {
         for(i in seq_along(correct_answers)) {
           ctype <- attr(correct_answers[[i]], "type")
-          if(ctype == "string" || ctype == "num") {
+          if(ctype == "string" || ctype == "num" || ctype[i] == "essay") {
             xml <- c(xml,
               '<respcondition title="incorrect">',
               '<conditionvar>',
@@ -722,7 +722,7 @@ make_itembody_blackboard <- function(rtiming = FALSE, shuffle = FALSE, rshuffle 
       if(!eval$partial & grepl("choice", x$metainfo$type)) {
         paste('<setvar varname="SCORE" action="Set">', points, '</setvar>', sep = '') ## note that Blackboard never uses "Add" (as in qti12) but "Set"
       } else NULL,
-      if(!eval$partial & x$metainfo$type == "string") {
+      if(!eval$partial & (x$metainfo$type == "string" || x$metainfo$type == "essay")) {
         paste('<setvar varname="EvaluationType" action="Set">', "CONTAINS", '</setvar>', sep = '')
       } else NULL,
       '<displayfeedback feedbacktype="Response" linkrefid="correct"/>',

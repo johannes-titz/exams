@@ -10,10 +10,11 @@ exams2qti21 <- function(file, n = 1L, nsamp = NULL, dir = ".",
   name = NULL, quiet = TRUE, edir = NULL, tdir = NULL, sdir = NULL, verbose = FALSE,
   resolution = 100, width = 4, height = 4, svg = FALSE, encoding  = "",
   num = NULL, mchoice = NULL, schoice = mchoice, string = NULL, cloze = NULL,
+  essay = NULL,
   template = "qti21",
   duration = NULL, stitle = "Exercise", ititle = "Question",
   adescription = "Please solve the following exercises.",
-  sdescription = "Please answer the following question.", 
+  sdescription = "Please answer the following question.",
   maxattempts = 1, cutvalue = 0, solutionswitch = TRUE, zip = TRUE,
   points = NULL, eval = list(partial = TRUE, negative = FALSE),
   converter = NULL, base64 = TRUE, mode = "hex", ...)
@@ -49,10 +50,11 @@ exams2qti21 <- function(file, n = 1L, nsamp = NULL, dir = ".",
   }
 
   ## start .xml assessement creation
-  ## get the possible item body functions and options  
-  itembody <- list(num = num, mchoice = mchoice, schoice = schoice, cloze = cloze, string = string)
+  ## get the possible item body functions and options
+  itembody <- list(num = num, mchoice = mchoice, schoice = schoice, cloze = cloze,
+                   string = string, essay = essay)
 
-  for(i in c("num", "mchoice", "schoice", "cloze", "string")) {
+  for(i in c("num", "mchoice", "schoice", "cloze", "string", "essay")) {
     if(is.null(itembody[[i]])) itembody[[i]] <- list()
     if(is.list(itembody[[i]])) {
       if(is.null(itembody[[i]]$eval))
@@ -507,7 +509,7 @@ make_itembody_qti21 <- function(shuffle = FALSE,
     ## start item presentation
     ## and insert question
     xml <- paste('<assessmentItem xsi:schemaLocation="http://www.imsglobal.org/xsd/imsqti_v2p1 http://www.imsglobal.org/xsd/qti/qtiv2p1/imsqti_v2p1p1.xsd http://www.w3.org/1998/Math/MathML http://www.w3.org/Math/XMLSchema/mathml2/mathml2.xsd" identifier="', x$metainfo$id, '" title="', x$metainfo$name, '" adaptive="false" timeDependent="false" xmlns="http://www.imsglobal.org/xsd/imsqti_v2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">', sep = '')
-    
+
     ## cycle trough all questions
     ids <- el <- pv <- mv <- list()
     for(i in 1:n) {
@@ -593,7 +595,7 @@ make_itembody_qti21 <- function(shuffle = FALSE,
                 if(solution[[i]][j]) {
                   pv[[i]]["pos"]
                 } else {
-                  pv[[i]]["neg"] 
+                  pv[[i]]["neg"]
                 }
               } else {
                 if(solution[[i]][j]) {
@@ -636,7 +638,7 @@ make_itembody_qti21 <- function(shuffle = FALSE,
           )
         } else {
           is_essay[i] <- TRUE
-          ## Essay type questions.
+          ## Essay type questions
           xml <- c(xml,
             paste('<responseDeclaration identifier="', ids[[i]]$response,
               '" cardinality="single" baseType="string">', sep = ''),
@@ -648,6 +650,20 @@ make_itembody_qti21 <- function(shuffle = FALSE,
           )
         }
       }
+
+      if(type[i] == "essay") {
+        is_essay[i] <- TRUE
+          ## Essay type questions
+          xml <- c(xml,
+            paste('<responseDeclaration identifier="', ids[[i]]$response,
+              '" cardinality="single" baseType="string">', sep = ''),
+            ## '<correctResponse>', ## N, correct response seems not to work?
+            ## if(dopbl) process_html_pbl(x$solution) else x$solution,
+            ## paste('<value>', solution[[i]], '</value>', sep = ''),
+            ## '</correctResponse>',
+            '</responseDeclaration>'
+          )
+        }
     }
 
     if(is.null(minvalue))
@@ -789,6 +805,29 @@ make_itembody_qti21 <- function(shuffle = FALSE,
           }
         }
       }
+
+      ## real essay
+      if (type[i] == "essay") {
+          ## Essay type questions.
+          txml <- c(
+            if(!ans) '<p>' else NULL,
+             if(!is.null(questionlist[[i]])) {
+                paste(if(enumerate & n > 1 & !ans) {
+                  paste(letters[if(x$metainfo$type == "cloze") i else j], ".",
+                    if(x$metainfo$type == "cloze" && length(solution[[i]]) > 1) paste(1, ".", sep = "") else NULL,
+                      sep = "")
+                } else NULL, if(!is.na(questionlist[[i]])) questionlist[[i]] else NULL)
+             },
+             if(!ans) '</p>' else NULL,
+             paste('<extendedTextInteraction responseIdentifier="', ids[[i]]$response,
+              '" minStrings="0" ', if(!is.na(maxchars[[i]][1])) {
+                  paste0(' expectedLength="', maxchars[[i]][1], '"')
+                } else NULL, if(!is.na(maxchars[[i]][2])) {
+                  paste(' expectedLines="', maxchars[[i]][2], '" ', sep = '')
+                } else NULL, '/>', sep = '')
+          )
+      }
+
       if(ans) {
         txml <- paste(txml, collapse = '\n')
         if(length(grep("choice", type[i])) & !any(grepl('<table>', xml, fixed = TRUE)))
@@ -991,7 +1030,7 @@ make_itembody_qti21 <- function(shuffle = FALSE,
 #        '</match>',
 #        '<not>',
 #        '<gte>',
-#        '<variable identifier="SCORE"/>', 
+#        '<variable identifier="SCORE"/>',
 #        '<variable identifier="MINSCORE"/>',
 #        '</gte>',
 #        '</not>',

@@ -2,7 +2,7 @@ exams_eval <- function(partial = TRUE, negative = FALSE, rule = c("false2", "fal
 {
   ## rule for negative points in partial evaluation of mchoice answers
   rule <- match.arg(rule)
-  
+
   ## negative value for wrong answers (or lower bound for sum of partial results)
   if(is.logical(negative)) negative <- ifelse(negative, -1, 0)
   negative <- -abs(as.numeric(negative))
@@ -33,19 +33,19 @@ exams_eval <- function(partial = TRUE, negative = FALSE, rule = c("false2", "fal
       } else {
         type <- "string"
 	if(!is.null(answer)) answer <- as.character(answer)
-      }    
+      }
     } else {
       stop("Unknown exercise type.")
     }
-    
+
     if(!is.null(answer)) {
       if(!any(is.na(answer)) && (length(correct) != length(answer))) stop(
         "Length of 'correct' and given 'answer' do not match.")
     }
-    
+
     return(list(type = type, correct = correct, answer = answer))
   }
-  
+
   checkanswer <- function(correct, answer, tolerance = 0)
   {
     ## preprocess type of solution
@@ -55,7 +55,7 @@ exams_eval <- function(partial = TRUE, negative = FALSE, rule = c("false2", "fal
     type <- type$type
 
     if(is.null(answer)) return(rep.int(0, length(correct)))
-    
+
     ## numeric answer can be NA or needs to fall into tolerance interval
     if(type == "num") {
       if(any(is.na(answer))) return(0L)
@@ -65,7 +65,7 @@ exams_eval <- function(partial = TRUE, negative = FALSE, rule = c("false2", "fal
         return(-1L)
       }
     }
-    
+
     ## mchoice answer can be processed partially or as a whole pattern
     if(type == "mchoice") {
       if(any(is.na(answer))) return(0L)
@@ -81,9 +81,9 @@ exams_eval <- function(partial = TRUE, negative = FALSE, rule = c("false2", "fal
         return(ifelse(all(correct == answer), 1L, -1L))
       }
     }
-    
+
     ## string answer is NA if empty, otherwise has to match exactly
-    if(type == "string") {
+    if(type == "string" || type == "essay") {
       if(any(is.na(answer)) | all(grepl("^[[:space:]]*$", answer))) return(NA)
       return(ifelse(correct == answer, 1L, -1L))
     }
@@ -105,7 +105,7 @@ exams_eval <- function(partial = TRUE, negative = FALSE, rule = c("false2", "fal
       return(c("pos" = 1, "neg" = negative))
     }
   }
-  
+
   pointsum <- function(correct, answer, tolerance = 0) {
     pts <- pointvec(correct)
     chk <- as.character(checkanswer(correct, answer, tolerance = tolerance))
