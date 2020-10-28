@@ -154,7 +154,7 @@ make_exams_write_html <- function(template = "plain", name = NULL,
 
       ## question and solution insertion
       for(j in seq_along(exm)) {
-        html_body <- c(html_body, "<li>")
+        html_body <- c(html_body, "<li><b>Question ", exm[[j]]$metainfo$title, "</b>")
         if(!is.null(exm[[j]]$metainfo$id)) {
           html_body <- c(html_body, paste("<b> ID: ", exm[[j]]$metainfo$id, "</b>", sep = ""), "<br/>")
         }
