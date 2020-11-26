@@ -34,9 +34,9 @@ exams2html <- function(file, n = 1L, nsamp = NULL, dir = ".", template = NULL,
     if(is.null(dir)) stop("Please specify an output 'dir'.")
   }
 
-  ## output name processing 
+  ## output name processing
   if(is.null(name)) name <- file_path_sans_ext(basename(template))
-  
+
   ## set up .html transformer and writer function
   htmltransform <- make_exercise_transform_html(converter = converter, ...)
   htmlwrite <- make_exams_write_html(template = template, name = name,
@@ -55,7 +55,7 @@ exams2html <- function(file, n = 1L, nsamp = NULL, dir = ".", template = NULL,
     out <- normalizePath(out)
     browseFile(out)
   }
-  
+
   ## return xexams object invisibly
   invisible(rval)
 }
@@ -127,7 +127,7 @@ make_exams_write_html <- function(template = "plain", name = NULL,
     dir_temp <- tempfile()
     if(!file.exists(dir_temp) && !dir.create(dir_temp))
       stop(gettextf("Cannot create temporary work directory '%s'.", dir_temp))
-    setwd(dir_temp) 
+    setwd(dir_temp)
     on.exit(unlink(dir_temp), add = TRUE)
 
 
@@ -154,7 +154,8 @@ make_exams_write_html <- function(template = "plain", name = NULL,
 
       ## question and solution insertion
       for(j in seq_along(exm)) {
-        html_body <- c(html_body, "<li><b>Question ", exm[[j]]$metainfo$title, "</b>")
+        print("hier")
+        html_body <- c(html_body, "<li><b>", exm[[j]]$metainfo$name, "</b>")
         if(!is.null(exm[[j]]$metainfo$id)) {
           html_body <- c(html_body, paste("<b> ID: ", exm[[j]]$metainfo$id, "</b>", sep = ""), "<br/>")
         }
