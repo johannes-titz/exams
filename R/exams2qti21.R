@@ -779,8 +779,8 @@ make_itembody_qti21 <- function(shuffle = FALSE,
              paste('<extendedTextInteraction responseIdentifier="', ids[[i]]$response,
               '" minStrings="0" ', if(!is.na(maxchars[[i]][1])) {
                   paste0(' expectedLength="', maxchars[[i]][1], '"')
-                } else NULL, if(!is.na(maxchars[[i]][2])) {
-                  paste(' expectedLines="', maxchars[[i]][2], '" ', sep = '')
+                } else NULL, if(!is.na(maxchars[[i]][1])) {
+                  paste(' expectedLines="', maxchars[[i]][1] / 50, '" ', sep = '')
                 } else NULL, '/>', sep = '')
           )
         } else {
@@ -822,8 +822,8 @@ make_itembody_qti21 <- function(shuffle = FALSE,
              paste('<extendedTextInteraction responseIdentifier="', ids[[i]]$response,
               '" minStrings="0" ', if(!is.na(maxchars[[i]][1])) {
                   paste0(' expectedLength="', maxchars[[i]][1], '"')
-                } else NULL, if(!is.na(maxchars[[i]][2])) {
-                  paste(' expectedLines="', maxchars[[i]][2], '" ', sep = '')
+                } else NULL, if(!is.na(maxchars[[i]][1])) {
+                  paste(' expectedLines="', maxchars[[i]][1] / 50, '" ', sep = '')
                 } else NULL, '/>', sep = '')
           )
       }
