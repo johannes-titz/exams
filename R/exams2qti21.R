@@ -6,6 +6,10 @@
 ## http://membervalidator.imsglobal.org/qti/
 ## https://webapps.ph.ed.ac.uk/qtiworks/anonymous/validator
 ## http://www.imsglobal.org/question/qtiv2p1/imsqti_implv2p1.html
+#'
+#' @param nx vector with number of versions to generate for each file, default
+#' is the number of the exam versions, for essay-type exams it is useful
+#' to only generate one version as there is usually not more than one
 exams2qti21 <- function(file, n = 1L, nx = rep(n, length(file)), nsamp = NULL, dir = ".",
   name = NULL, quiet = TRUE, edir = NULL, tdir = NULL, sdir = NULL, verbose = FALSE,
   resolution = 100, width = 4, height = 4, svg = FALSE, encoding  = "",
