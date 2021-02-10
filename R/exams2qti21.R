@@ -6,7 +6,7 @@
 ## http://membervalidator.imsglobal.org/qti/
 ## https://webapps.ph.ed.ac.uk/qtiworks/anonymous/validator
 ## http://www.imsglobal.org/question/qtiv2p1/imsqti_implv2p1.html
-exams2qti21 <- function(file, n = 1L, nsamp = NULL, dir = ".",
+exams2qti21 <- function(file, n = 1L, nx = rep(n, length(file)), nsamp = NULL, dir = ".",
   name = NULL, quiet = TRUE, edir = NULL, tdir = NULL, sdir = NULL, verbose = FALSE,
   resolution = 100, width = 4, height = 4, svg = FALSE, encoding  = "",
   num = NULL, mchoice = NULL, schoice = mchoice, string = NULL, cloze = NULL,
@@ -117,7 +117,7 @@ exams2qti21 <- function(file, n = 1L, nsamp = NULL, dir = ".",
   manifest_xml <- xml[start:end]
 
   ## obtain the number of exams and questions
-  nx <- length(exm)
+  #nx <- length(exm)
   nq <- if(!is.xexam) length(exm[[1L]]) else length(exm)
 
   ## create a name
@@ -176,13 +176,13 @@ exams2qti21 <- function(file, n = 1L, nsamp = NULL, dir = ".",
     if(is.xexam) nx <- length(exm[[j]])
 
     ## create item ids
-    item_ids <- paste(sec_ids[j], make_test_ids(nx, type = "item"), sep = "_")
+    item_ids <- paste(sec_ids[j], make_test_ids(nx[j], type = "item"), sep = "_")
 
     ## collect items for section linking
     sec_items_A <- NULL
 
     ## now, insert the questions
-    for(i in 1:nx) {
+    for(i in 1:nx[j]) {
       ## special handling of indices
       if(is.xexam) {
         if(i < 2)
